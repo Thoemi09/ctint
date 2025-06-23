@@ -46,7 +46,7 @@ namespace triqs_ctint::measures {
     auto p                    = params.n_cheb_coeffs;
     int N                     = 0; // Number of samples in each block, orbital index pair
     auto map_to_cheb_interval = [a = 0, b = params.beta](auto const &x) { return nda::array<double, 1>{(2 * x - (a + b)) / (b - a)}; };
-    for (auto bl : range(params.gf_struct.size())) {
+    for (auto bl : range(params.n_blocks())) {
       auto bl_size = params.gf_struct[bl].second;
       for (auto i : range(bl_size)) {
         for (auto j : range(bl_size)) {
@@ -63,7 +63,7 @@ namespace triqs_ctint::measures {
           auto T_curr = tau_prime; //0, params.beta);
           curlyG[bl](i, j).push_back(nda::dot(weight, T_curr) / (M_PI / 2));
           for (int k = 2; k < p + 1; k++) {
-            T_next = 2 * map_to_cheb_interval(tau) * T_curr - T_prev;
+            T_next = 2 * tau_prime * T_curr - T_prev;
             curlyG[bl](i, j).push_back(nda::dot(weight, T_next) / (M_PI / 2));
             T_prev = T_curr;
             T_curr = T_next;
@@ -75,15 +75,14 @@ namespace triqs_ctint::measures {
     Z = mpi::all_reduce(Z, comm);
 
     // Collect results and normalize
-    for (auto b : range(params.gf_struct.size())) {
+    for (auto b : range(params.n_blocks())) {
       auto bl_size = params.gf_struct[b].second;
       for (auto i : range(bl_size)) {
         for (auto j : range(bl_size)) {
           tau_samples[b](i, j)    = mpi::gather(tau_samples[b](i, j));
           weight_samples[b](i, j) = mpi::gather(weight_samples[b](i, j));
           curlyG[b](i, j)         = mpi::reduce(curlyG[b](i, j), comm);
-          nda::vector_view<dcomplex>{curlyG[b](i, j)} /= (-Z * params.beta);
-          // curlyG[b](i, j)         = tmp/(-Z * params.beta);
+          nda::vector_view{curlyG[b](i, j)} /= (-Z * params.beta);
         }
       }
     }
