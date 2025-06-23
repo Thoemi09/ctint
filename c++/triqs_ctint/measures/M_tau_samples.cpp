@@ -60,7 +60,7 @@ namespace triqs_ctint::measures {
           // Begin Chebyshev recurrence
           auto T_prev = nda::ones<double>(N);
           curlyG[bl](i, j).push_back(nda::dot(weight, T_prev) / (M_PI));
-          auto T_curr = tau_prime; //0, params.beta);
+          auto T_curr = tau_prime;
           curlyG[bl](i, j).push_back(nda::dot(weight, T_curr) / (M_PI / 2));
           for (int k = 2; k < p + 1; k++) {
             T_next = 2 * tau_prime * T_curr - T_prev;
@@ -82,7 +82,7 @@ namespace triqs_ctint::measures {
           tau_samples[b](i, j)    = mpi::gather(tau_samples[b](i, j));
           weight_samples[b](i, j) = mpi::gather(weight_samples[b](i, j));
           curlyG[b](i, j)         = mpi::reduce(curlyG[b](i, j), comm);
-          nda::vector_view{curlyG[b](i, j)} /= (-Z * params.beta);
+          nda::vector_view<dcomplex>{curlyG[b](i, j)} /= (-Z * params.beta);
         }
       }
     }
