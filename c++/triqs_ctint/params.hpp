@@ -109,7 +109,7 @@ namespace triqs_ctint {
     bool measure_M_tau = true;
 
     /// Measure M(tau) samples
-    bool measure_M_tau_samples = true;
+    bool measure_M_tau_samples = false;
 
     /// N Cheb
     long n_cheb_coeffs = 10;
