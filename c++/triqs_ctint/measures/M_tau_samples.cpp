@@ -14,9 +14,6 @@ namespace triqs_ctint::measures {
       weight_samples.emplace_back(bl_size, bl_size);
       curlyG.emplace_back(nda::array<std::vector<dcomplex>, 2>(bl_size, bl_size));
     }
-
-    results->M_hartree = make_block_vector<M_tau_scalar_t>(params.gf_struct);
-    for (auto &m : results->M_hartree.value()) M_hartree_.push_back(m);
   }
 
   void M_tau_samples::accumulate(mc_weight_t sign) {
@@ -29,9 +26,7 @@ namespace triqs_ctint::measures {
       // Loop over every index pair (x,y) in the determinant matrix[b]
       foreach (qmc_config.dets[b], [&](c_t const &c_i, cdag_t const &cdag_j, auto const &Ginv) {
         // Check for the equal-time case
-        if (c_i.tau == cdag_j.tau) {
-          M_hartree_[b](cdag_j.u, c_i.u) += Ginv * sign;
-        } else {
+        if (c_i.tau != cdag_j.tau) { // Ignore M_hartree Contributions
           // Absolute time-difference tau of the index pair
           auto [s, dtau] = cyclic_difference(cdag_j.tau, c_i.tau);
           tau_samples[b](cdag_j.u, c_i.u).emplace_back(dtau);
@@ -85,11 +80,6 @@ namespace triqs_ctint::measures {
           nda::vector_view<dcomplex>{curlyG[b](i, j)} /= (-Z * params.beta);
         }
       }
-    }
-
-    for (auto &m : M_hartree_) {
-      m = mpi::all_reduce(m, comm);
-      m = m / (-Z * params.beta);
     }
   }
 
